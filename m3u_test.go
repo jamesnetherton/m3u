@@ -8,21 +8,21 @@ import (
 func TestPlaylist(t *testing.T) {
 	playlist, _ := Parse("testdata/playlist.m3u")
 
-	if len(playlist.tracks) != 5 {
+	if len(playlist.Tracks) != 5 {
 		t.Fatalf("Expected track count to be 5")
 	}
 
 	for i := 0; i < 5; i++ {
-		if playlist.tracks[i].length != i+1 {
-			t.Fatalf("Expected track length to be %d but was %d", i+1, playlist.tracks[i].length)
+		if playlist.Tracks[i].Length != i+1 {
+			t.Fatalf("Expected track Length to be %d but was %d", i+1, playlist.Tracks[i].Length)
 		}
 
-		if playlist.tracks[i].name != fmt.Sprintf("Track %d", i+1) {
-			t.Fatalf("Expected track name to be Track %d but was '%s'", i+1, playlist.tracks[i].name)
+		if playlist.Tracks[i].Name != fmt.Sprintf("Track %d", i+1) {
+			t.Fatalf("Expected track name to be Track %d but was '%s'", i+1, playlist.Tracks[i].Name)
 		}
 
-		if playlist.tracks[i].path != fmt.Sprintf("Track%d.mp4", i+1) {
-			t.Fatalf("Expected track path to be Track%d.mp4 but was '%s'", i+1, playlist.tracks[i].path)
+		if playlist.Tracks[i].Path != fmt.Sprintf("Track%d.mp4", i+1) {
+			t.Fatalf("Expected track path to be Track%d.mp4 but was '%s'", i+1, playlist.Tracks[i].Path)
 		}
 	}
 }

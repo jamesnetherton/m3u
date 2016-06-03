@@ -10,14 +10,14 @@ import (
 
 // Playlist is a type that represents an m3u playlist containing 0 or more tracks
 type Playlist struct {
-	tracks []Track
+	Tracks []Track
 }
 
 // Track represents an m3u track
 type Track struct {
-	name   string
-	length int
-	path   string
+	Name   string
+	Length int
+	Path   string
 }
 
 // Parse parses an m3u playlist with the given file name and returns a Playlist
@@ -49,11 +49,11 @@ func Parse(fileName string) (playlist Playlist, err error) {
 			}
 			length, _ := strconv.Atoi(trackInfo[0])
 			track := &Track{trackInfo[1], length, ""}
-			playlist.tracks = append(playlist.tracks, *track)
+			playlist.Tracks = append(playlist.Tracks, *track)
 		} else if strings.HasPrefix(line, "#") {
 			continue
 		} else {
-			playlist.tracks[len(playlist.tracks)-1].path = line
+			playlist.Tracks[len(playlist.Tracks)-1].Path = line
 		}
 	}
 
