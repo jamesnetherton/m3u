@@ -21,8 +21,8 @@ func TestPlaylist(t *testing.T) {
 			t.Fatalf("Expected track name to be Track %d but was '%s'", i+1, playlist.Tracks[i].Name)
 		}
 
-		if playlist.Tracks[i].Path != fmt.Sprintf("Track%d.mp4", i+1) {
-			t.Fatalf("Expected track path to be Track%d.mp4 but was '%s'", i+1, playlist.Tracks[i].Path)
+		if playlist.Tracks[i].URI != fmt.Sprintf("Track%d.mp4", i+1) {
+			t.Fatalf("Expected track URI to be Track%d.mp4 but was '%s'", i+1, playlist.Tracks[i].URI)
 		}
 	}
 }

@@ -17,7 +17,7 @@ type Playlist struct {
 type Track struct {
 	Name   string
 	Length int
-	Path   string
+	URI    string
 }
 
 // Parse parses an m3u playlist with the given file name and returns a Playlist
@@ -53,7 +53,7 @@ func Parse(fileName string) (playlist Playlist, err error) {
 		} else if strings.HasPrefix(line, "#") {
 			continue
 		} else {
-			playlist.Tracks[len(playlist.Tracks)-1].Path = line
+			playlist.Tracks[len(playlist.Tracks)-1].URI = line
 		}
 	}
 
