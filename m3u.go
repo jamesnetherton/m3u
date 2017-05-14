@@ -27,18 +27,19 @@ func Parse(fileName string) (playlist Playlist, err error) {
 		err = errors.New("Unable to open playlist file")
 		return
 	}
+	defer f.Close()
 
-	lineCount := 1
+	onFirstLine := true
 	scanner := bufio.NewScanner(f)
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		if lineCount == 1 && !strings.HasPrefix(line, "#EXTM3U") {
+		if onFirstLine && !strings.HasPrefix(line, "#EXTM3U") {
 			err = errors.New("Invalid m3u file format. Expected #EXTM3U file header")
 			return
 		}
 
-		lineCount++
+		onFirstLine = false
 
 		if strings.HasPrefix(line, "#EXTINF") {
 			line := strings.Replace(line, "#EXTINF:", "", -1)
@@ -47,11 +48,18 @@ func Parse(fileName string) (playlist Playlist, err error) {
 				err = errors.New("Invalid m3u file format. Expected EXTINF metadata to contain track length and name data")
 				return
 			}
-			length, _ := strconv.Atoi(trackInfo[0])
+			length, parseErr := strconv.Atoi(trackInfo[0])
+			if parseErr != nil {
+				err = errors.New("Unable to parse length")
+				return
+			}
 			track := &Track{trackInfo[1], length, ""}
 			playlist.Tracks = append(playlist.Tracks, *track)
-		} else if strings.HasPrefix(line, "#") {
+		} else if strings.HasPrefix(line, "#") || line == "" {
 			continue
+		} else if len(playlist.Tracks) == 0 {
+			err = errors.New("URI provided for playlist with no tracks")
+			return
 		} else {
 			playlist.Tracks[len(playlist.Tracks)-1].URI = line
 		}
