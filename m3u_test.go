@@ -47,3 +47,10 @@ func TestPlaylistFileNotFound(t *testing.T) {
 		t.Fatalf("Expected parse error")
 	}
 }
+
+func TestPlaylistMissingInf(t *testing.T) {
+	_, err := Parse("testdata/playlist_missing_inf.m3u")
+	if err == nil {
+		t.Fatalf("Expected parse error")
+	}
+}
