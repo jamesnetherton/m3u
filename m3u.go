@@ -48,7 +48,7 @@ func Parse(fileName string) (playlist Playlist, err error) {
 				err = errors.New("Invalid m3u file format. Expected EXTINF metadata to contain track length and name data")
 				return
 			}
-			length, parseErr := strconv.Atoi(trackInfo[0])
+			length, parseErr := strconv.Atoi(strings.Split(trackInfo[0], " ")[0])
 			if parseErr != nil {
 				err = errors.New("Unable to parse length")
 				return
