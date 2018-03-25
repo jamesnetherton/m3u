@@ -62,11 +62,11 @@ func Parse(fileName string) (playlist Playlist, err error) {
 				err = errors.New("Unable to parse length")
 				return
 			}
-			track := &Track{trackInfo[1], length, "", nil}
+			track := &Track{strings.Trim(trackInfo[1], " "), length, "", nil}
 			tagList := tagsRegExp.FindAllString(line, -1)
 			for i := range tagList {
 				tagInfo := strings.Split(tagList[i], "=")
-				tag := &Tag{tagInfo[0], tagInfo[1]}
+				tag := &Tag{tagInfo[0], strings.Replace(tagInfo[1], "\"", "", -1)}
 				track.Tags = append(track.Tags, *tag)
 			}
 			playlist.Tracks = append(playlist.Tracks, *track)
@@ -76,7 +76,7 @@ func Parse(fileName string) (playlist Playlist, err error) {
 			err = errors.New("URI provided for playlist with no tracks")
 			return
 		} else {
-			playlist.Tracks[len(playlist.Tracks)-1].URI = line
+			playlist.Tracks[len(playlist.Tracks)-1].URI = strings.Trim(line, " ")
 		}
 	}
 
