@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -13,11 +14,18 @@ type Playlist struct {
 	Tracks []Track
 }
 
-// Track represents an m3u track
+// A Tag is a simple key/value pair
+type Tag struct {
+	Name string
+	Value string
+}
+
+// Track represents an m3u track with a Name, Lengh, URI and a set of tags
 type Track struct {
 	Name   string
 	Length int
 	URI    string
+	Tags   []Tag
 }
 
 // Parse parses an m3u playlist with the given file name and returns a Playlist
@@ -31,7 +39,8 @@ func Parse(fileName string) (playlist Playlist, err error) {
 
 	onFirstLine := true
 	scanner := bufio.NewScanner(f)
-
+	tagsRegExp, _ := regexp.Compile("([a-zA-Z0-9-]+?)=\"([^\"]+)\"")
+	
 	for scanner.Scan() {
 		line := scanner.Text()
 		if onFirstLine && !strings.HasPrefix(line, "#EXTM3U") {
@@ -48,12 +57,18 @@ func Parse(fileName string) (playlist Playlist, err error) {
 				err = errors.New("Invalid m3u file format. Expected EXTINF metadata to contain track length and name data")
 				return
 			}
-			length, parseErr := strconv.Atoi(trackInfo[0])
+			length, parseErr := strconv.Atoi(strings.Split(trackInfo[0], " ")[0])
 			if parseErr != nil {
 				err = errors.New("Unable to parse length")
 				return
 			}
-			track := &Track{trackInfo[1], length, ""}
+			track := &Track{strings.Trim(trackInfo[1], " "), length, "", nil}
+			tagList := tagsRegExp.FindAllString(line, -1)
+			for i := range tagList {
+				tagInfo := strings.Split(tagList[i], "=")
+				tag := &Tag{tagInfo[0], strings.Replace(tagInfo[1], "\"", "", -1)}
+				track.Tags = append(track.Tags, *tag)
+			}
 			playlist.Tracks = append(playlist.Tracks, *track)
 		} else if strings.HasPrefix(line, "#") || line == "" {
 			continue
@@ -61,7 +76,7 @@ func Parse(fileName string) (playlist Playlist, err error) {
 			err = errors.New("URI provided for playlist with no tracks")
 			return
 		} else {
-			playlist.Tracks[len(playlist.Tracks)-1].URI = line
+			playlist.Tracks[len(playlist.Tracks)-1].URI = strings.Trim(line, " ")
 		}
 	}
 

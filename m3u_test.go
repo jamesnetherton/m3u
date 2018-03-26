@@ -24,6 +24,14 @@ func TestPlaylist(t *testing.T) {
 		if playlist.Tracks[i].URI != fmt.Sprintf("Track%d.mp4", i+1) {
 			t.Fatalf("Expected track URI to be Track%d.mp4 but was '%s'", i+1, playlist.Tracks[i].URI)
 		}
+
+                if playlist.Tracks[i].Tags[0].Name != "group-title" {
+			t.Fatalf("Expected tag to be group-title but was '%s'", playlist.Tracks[i].Tags[0].Name)
+                }
+
+                if playlist.Tracks[i].Tags[0].Value != "Album1" {
+			t.Fatalf("Expected group-title tag value to be Album1 but was '%s'", playlist.Tracks[i].Tags[0].Value)
+                }
 	}
 }
 
