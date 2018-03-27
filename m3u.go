@@ -3,7 +3,9 @@ package m3u
 import (
 	"bufio"
 	"errors"
-	"github.com/utahta/go-openuri"
+	"io"
+	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,7 +32,15 @@ type Track struct {
 
 // Parse parses an m3u playlist with the given file name and returns a Playlist
 func Parse(fileName string) (playlist Playlist, err error) {
-	f, err := openuri.Open(fileName)
+	var f io.ReadCloser
+	var data *http.Response
+	if strings.HasPrefix(fileName, "http://") || strings.HasPrefix(fileName, "https://") {
+		data, err = http.Get(fileName)
+		f = data.Body
+	} else {
+		f, err = os.Open(fileName)
+	}
+	
 	if err != nil {
 		err = errors.New("Unable to open playlist file")
 		return
