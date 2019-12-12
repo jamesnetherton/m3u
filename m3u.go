@@ -95,23 +95,34 @@ func Parse(fileName string) (playlist Playlist, err error) {
 	return playlist, nil
 }
 
-// Marshall Playlist struct to an m3u file.
-func Marshall(p Playlist) io.Reader {
+// Marshall Playlist to an m3u file.
+func Marshall(p Playlist) (io.Reader, error) {
 	buf := new(bytes.Buffer)
-	buf.WriteString("#EXTM3U\n")
+	w := bufio.NewWriter(buf)
+	if err := MarshallInto(p, w); err != nil {
+		return nil, err
+	}
+
+	return buf, nil
+}
+
+// MarshallInto a *bufio.Writer a Playlist.
+func MarshallInto(p Playlist, into *bufio.Writer) error {
+	into.WriteString("#EXTM3U\n")
 	for _, track := range p.Tracks {
-		buf.WriteString("#EXTINF:")
-		buf.WriteString(fmt.Sprintf("%d ", track.Length))
+		into.WriteString("#EXTINF:")
+		into.WriteString(fmt.Sprintf("%d ", track.Length))
 		for i := range track.Tags {
 			if i == len(track.Tags)-1 {
-				buf.WriteString(fmt.Sprintf("%s=%q", track.Tags[i].Name, track.Tags[i].Value))
+				into.WriteString(fmt.Sprintf("%s=%q", track.Tags[i].Name, track.Tags[i].Value))
 				continue
 			}
-			buf.WriteString(fmt.Sprintf("%s=%q ", track.Tags[i].Name, track.Tags[i].Value))
+			into.WriteString(fmt.Sprintf("%s=%q ", track.Tags[i].Name, track.Tags[i].Value))
 		}
-		buf.WriteString(", ")
+		into.WriteString(", ")
 
-		buf.WriteString(fmt.Sprintf("%s\n%s\n", track.Name, track.URI))
+		into.WriteString(fmt.Sprintf("%s\n%s\n", track.Name, track.URI))
 	}
-	return buf
+
+	return into.Flush()
 }

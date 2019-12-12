@@ -102,7 +102,10 @@ func TestMarshallPlaylist(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reader := Marshall(playlist)
+	reader, err := Marshall(playlist)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	b := reader.(*bytes.Buffer)
 
