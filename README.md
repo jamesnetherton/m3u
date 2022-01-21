@@ -1,6 +1,6 @@
 # M3U
 
-[![CircleCI](https://img.shields.io/circleci/project/github/jamesnetherton/m3u/master.svg)](https://circleci.com/gh/jamesnetherton/m3u/tree/master)
+[![Build Pull Request](https://github.com/jamesnetherton/m3u/actions/workflows/pr-build.yaml/badge.svg)](https://github.com/jamesnetherton/m3u/actions/workflows/pr-build.yaml)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=600)](https://opensource.org/licenses/MIT)
 
 A basic golang [M3U playlist](https://en.wikipedia.org/wiki/M3U) parser library.
