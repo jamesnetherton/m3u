@@ -33,31 +33,36 @@ type Track struct {
 }
 
 // Parse parses an m3u playlist with the given file name and returns a Playlist
-func Parse(fileName string) (playlist Playlist, err error) {
+func Parse(fileName string) (Playlist, error) {
 	var f io.ReadCloser
-	var data *http.Response
+
 	if strings.HasPrefix(fileName, "http://") || strings.HasPrefix(fileName, "https://") {
-		data, err = http.Get(fileName)
+		data, err := http.Get(fileName)
+		if err != nil {
+			return Playlist{},
+				fmt.Errorf("unable to open playlist URL: %v", err)
+		}
 		f = data.Body
 	} else {
-		f, err = os.Open(fileName)
-	}
-
-	if err != nil {
-		err = errors.New("Unable to open playlist file")
-		return
+		file, err := os.Open(fileName)
+		if err != nil {
+			return Playlist{},
+				fmt.Errorf("unable to open playlist file: %v", err)
+		}
+		f = file
 	}
 	defer f.Close()
 
 	onFirstLine := true
 	scanner := bufio.NewScanner(f)
 	tagsRegExp, _ := regexp.Compile("([a-zA-Z0-9-]+?)=\"([^\"]+)\"")
+	playlist := Playlist{}
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		if onFirstLine && !strings.HasPrefix(line, "#EXTM3U") {
-			err = errors.New("Invalid m3u file format. Expected #EXTM3U file header")
-			return
+			return Playlist{},
+				errors.New("invalid m3u file format. Expected #EXTM3U file header")
 		}
 
 		onFirstLine = false
@@ -66,13 +71,12 @@ func Parse(fileName string) (playlist Playlist, err error) {
 			line := strings.Replace(line, "#EXTINF:", "", -1)
 			trackInfo := strings.Split(line, ",")
 			if len(trackInfo) < 2 {
-				err = errors.New("Invalid m3u file format. Expected EXTINF metadata to contain track length and name data")
-				return
+				return Playlist{},
+					errors.New("invalid m3u file format. Expected EXTINF metadata to contain track length and name data")
 			}
 			length, parseErr := strconv.Atoi(strings.Split(trackInfo[0], " ")[0])
 			if parseErr != nil {
-				err = errors.New("Unable to parse length")
-				return
+				return Playlist{}, errors.New("unable to parse length")
 			}
 			track := &Track{strings.Trim(trackInfo[1], " "), length, "", nil}
 			tagList := tagsRegExp.FindAllString(line, -1)
@@ -85,8 +89,9 @@ func Parse(fileName string) (playlist Playlist, err error) {
 		} else if strings.HasPrefix(line, "#") || line == "" {
 			continue
 		} else if len(playlist.Tracks) == 0 {
-			err = errors.New("URI provided for playlist with no tracks")
-			return
+			return Playlist{},
+				errors.New("URI provided for playlist with no tracks")
+
 		} else {
 			playlist.Tracks[len(playlist.Tracks)-1].URI = strings.Trim(line, " ")
 		}
