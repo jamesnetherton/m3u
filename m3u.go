@@ -33,21 +33,19 @@ type Track struct {
 }
 
 // Parse parses an m3u playlist with the given file name and returns a Playlist
-func Parse(fileName string) (Playlist, error) {
+func Parse(fileName string) (*Playlist, error) {
 	var f io.ReadCloser
 
 	if strings.HasPrefix(fileName, "http://") || strings.HasPrefix(fileName, "https://") {
 		data, err := http.Get(fileName)
 		if err != nil {
-			return Playlist{},
-				fmt.Errorf("unable to open playlist URL: %v", err)
+			return nil, fmt.Errorf("unable to open playlist URL: %v", err)
 		}
 		f = data.Body
 	} else {
 		file, err := os.Open(fileName)
 		if err != nil {
-			return Playlist{},
-				fmt.Errorf("unable to open playlist file: %v", err)
+			return nil, fmt.Errorf("unable to open playlist file: %v", err)
 		}
 		f = file
 	}
@@ -56,12 +54,13 @@ func Parse(fileName string) (Playlist, error) {
 	onFirstLine := true
 	scanner := bufio.NewScanner(f)
 	tagsRegExp, _ := regexp.Compile("([a-zA-Z0-9-]+?)=\"([^\"]+)\"")
-	playlist := Playlist{}
+
+	var playlist = new(Playlist)
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		if onFirstLine && !strings.HasPrefix(line, "#EXTM3U") {
-			return Playlist{},
+			return nil,
 				errors.New("invalid m3u file format. Expected #EXTM3U file header")
 		}
 
@@ -71,12 +70,12 @@ func Parse(fileName string) (Playlist, error) {
 			line := strings.Replace(line, "#EXTINF:", "", -1)
 			trackInfo := strings.Split(line, ",")
 			if len(trackInfo) < 2 {
-				return Playlist{},
+				return nil,
 					errors.New("invalid m3u file format. Expected EXTINF metadata to contain track length and name data")
 			}
 			length, parseErr := strconv.Atoi(strings.Split(trackInfo[0], " ")[0])
 			if parseErr != nil {
-				return Playlist{}, errors.New("unable to parse length")
+				return nil, errors.New("unable to parse length")
 			}
 			track := &Track{strings.Trim(trackInfo[1], " "), length, "", nil}
 			tagList := tagsRegExp.FindAllString(line, -1)
@@ -89,8 +88,7 @@ func Parse(fileName string) (Playlist, error) {
 		} else if strings.HasPrefix(line, "#") || line == "" {
 			continue
 		} else if len(playlist.Tracks) == 0 {
-			return Playlist{},
-				errors.New("URI provided for playlist with no tracks")
+			return nil, errors.New("URI provided for playlist with no tracks")
 
 		} else {
 			playlist.Tracks[len(playlist.Tracks)-1].URI = strings.Trim(line, " ")
@@ -101,7 +99,7 @@ func Parse(fileName string) (Playlist, error) {
 }
 
 // Marshall Playlist to an m3u file.
-func Marshall(p Playlist) (io.Reader, error) {
+func Marshall(p *Playlist) (io.Reader, error) {
 	buf := new(bytes.Buffer)
 	w := bufio.NewWriter(buf)
 	if err := MarshallInto(p, w); err != nil {
@@ -112,7 +110,7 @@ func Marshall(p Playlist) (io.Reader, error) {
 }
 
 // MarshallInto a *bufio.Writer a Playlist.
-func MarshallInto(p Playlist, into *bufio.Writer) error {
+func MarshallInto(p *Playlist, into *bufio.Writer) error {
 	into.WriteString("#EXTM3U\n")
 	for _, track := range p.Tracks {
 		into.WriteString("#EXTINF:")
