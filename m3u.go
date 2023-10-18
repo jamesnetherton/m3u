@@ -13,9 +13,10 @@ import (
 	"strings"
 )
 
-// Playlist is a type that represents an m3u playlist containing 0 or more tracks
+// Playlist is a type that represents an m3u playlist containing 0 or more tracks or streams
 type Playlist struct {
-	Tracks []Track
+	Tracks  []Track
+	Streams []StreamInfo
 }
 
 // A Tag is a simple key/value pair
@@ -30,6 +31,15 @@ type Track struct {
 	Length int
 	URI    string
 	Tags   []Tag
+}
+
+type StreamInfo struct {
+	Resolution string
+	Bandwidth  int
+	Codecs     string
+	Name       string
+	FrameRate  float64
+	URI        string
 }
 
 // Parse parses an m3u playlist with the given file name and returns a Playlist
@@ -86,11 +96,32 @@ func Parse(fileName string) (Playlist, error) {
 				track.Tags = append(track.Tags, *tag)
 			}
 			playlist.Tracks = append(playlist.Tracks, *track)
+		} else if strings.HasPrefix(line, "#EXT-X-STREAM-INF") {
+			line := strings.Replace(line, "#EXT-X-STREAM-INF:", "", -1)
+			streamInfo := strings.Split(line, ",")
+			if len(streamInfo) < 2 {
+				return Playlist{},
+					errors.New("invalid m3u file format. Expected EXT-X-STREAM-INF metadata to contain bitrate and resolution data")
+			}
+			bandwidth := strings.Split(streamInfo[1], "=")[1]
+			bandwidthInt, parseErr := strconv.Atoi(bandwidth)
+			if parseErr != nil {
+				return Playlist{}, errors.New("unable to parse bandwidth")
+			}
+			resolution := strings.Split(streamInfo[2], "=")[1]
+			codecs := strings.Split(streamInfo[3], "=")[1]
+			frameRate := strings.Split(streamInfo[4], "=")[1]
+			frameRateFloat, parseErr := strconv.ParseFloat(frameRate, 64)
+			if parseErr != nil {
+				return Playlist{}, errors.New("unable to parse frame rate")
+			}
+			stream := &StreamInfo{resolution, bandwidthInt, codecs, "", frameRateFloat, ""}
+			playlist.Streams = append(playlist.Streams, *stream)
 		} else if strings.HasPrefix(line, "#") || line == "" {
 			continue
-		} else if len(playlist.Tracks) == 0 {
+		} else if len(playlist.Tracks) == 0 && len(playlist.Streams) == 0 {
 			return Playlist{},
-				errors.New("URI provided for playlist with no tracks")
+				errors.New("URI provided for playlist with no tracks or streams")
 
 		} else {
 			playlist.Tracks[len(playlist.Tracks)-1].URI = strings.Trim(line, " ")
