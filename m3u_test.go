@@ -68,6 +68,56 @@ func TestRemotePlaylist(t *testing.T) {
 	}
 }
 
+func TestPlaylistWithStreamInfo(t *testing.T) {
+	playlist, _ := Parse("testdata/playlist_stream_info.m3u")
+
+	if len(playlist.VariantStreams) != 4 {
+		t.Fatalf("Expected track count to be 4")
+	}
+
+	for i := 0; i < 4; i++ {
+		if playlist.VariantStreams[i].Bandwidth == 0 {
+			t.Fatalf("Expected bandwidth to be 128000 but was %d", playlist.VariantStreams[i].Bandwidth)
+		}
+
+		if playlist.VariantStreams[i].Resolution == "" {
+			t.Fatalf("Expected resolution to be set but was %s", playlist.VariantStreams[i].Resolution)
+		}
+
+		if playlist.VariantStreams[i].AverageBandwith == 0 {
+			t.Fatalf("Expected average bandwidth to be set but was %d", playlist.VariantStreams[i].AverageBandwith)
+		}
+
+		if playlist.VariantStreams[i].Codecs == "" {
+			t.Fatalf("Expected codecs to be set but was %s", playlist.VariantStreams[i].Codecs)
+		}
+
+		if playlist.VariantStreams[i].Name == "" {
+			t.Fatalf("Expected name to be set but was %s", playlist.VariantStreams[i].Name)
+		}
+
+		if playlist.VariantStreams[i].FrameRate == 0 {
+			t.Fatalf("Expected frame rate to be set but was %f", playlist.VariantStreams[i].FrameRate)
+		}
+
+		if playlist.VariantStreams[i].HdcpLevel == "" {
+			t.Fatalf("Expected hdcp level to be set but was %s", playlist.VariantStreams[i].HdcpLevel)
+		}
+
+		if playlist.VariantStreams[i].Video == "" {
+			t.Fatalf("Expected video to be set but was %s", playlist.VariantStreams[i].Video)
+		}
+
+		if playlist.VariantStreams[i].Audio == "" {
+			t.Fatalf("Expected audio to be set but was %s", playlist.VariantStreams[i].Audio)
+		}
+
+		if playlist.VariantStreams[i].URI == "" {
+			t.Fatalf("Expected URI to be set but was %s", playlist.VariantStreams[i].URI)
+		}
+	}
+}
+
 func TestPlaylistInvalidHeader(t *testing.T) {
 	_, err := Parse("testdata/playlist_no_header.m3u")
 	if err == nil {

@@ -15,8 +15,8 @@ import (
 
 // Playlist is a type that represents an m3u playlist containing 0 or more tracks or streams
 type Playlist struct {
-	Tracks  []Track
-	Streams []StreamInfo
+	Tracks         []Track
+	VariantStreams []VariantStream
 }
 
 // A Tag is a simple key/value pair
@@ -33,13 +33,19 @@ type Track struct {
 	Tags   []Tag
 }
 
-type StreamInfo struct {
-	Resolution string
-	Bandwidth  int
-	Codecs     string
-	Name       string
-	FrameRate  float64
-	URI        string
+type VariantStream struct {
+	Resolution      string
+	Bandwidth       int
+	AverageBandwith int
+	Codecs          string
+	Name            string
+	FrameRate       float64
+	HdcpLevel       string
+	Video           string
+	Audio           string
+	Subtitle        string
+	ClosedCaptions  string
+	URI             string
 }
 
 // Parse parses an m3u playlist with the given file name and returns a Playlist
@@ -99,31 +105,79 @@ func Parse(fileName string) (Playlist, error) {
 		} else if strings.HasPrefix(line, "#EXT-X-STREAM-INF") {
 			line := strings.Replace(line, "#EXT-X-STREAM-INF:", "", -1)
 			streamInfo := strings.Split(line, ",")
-			if len(streamInfo) < 2 {
+			if len(streamInfo) < 1 {
 				return Playlist{},
-					errors.New("invalid m3u file format. Expected EXT-X-STREAM-INF metadata to contain bitrate and resolution data")
+					errors.New("invalid m3u file format. Expected EXT-X-STREAM-INF metadata to contain bitrate data")
 			}
-			bandwidth := strings.Split(streamInfo[1], "=")[1]
-			bandwidthInt, parseErr := strconv.Atoi(bandwidth)
-			if parseErr != nil {
-				return Playlist{}, errors.New("unable to parse bandwidth")
+			stream := &VariantStream{}
+			for _, param := range streamInfo {
+				if strings.HasPrefix(param, "BANDWIDTH") {
+					bandwidth := strings.Split(streamInfo[1], "=")[1]
+					bandwidthInt, parseErr := strconv.Atoi(bandwidth)
+					if parseErr != nil {
+						return Playlist{}, errors.New("unable to parse bandwidth")
+					}
+					stream.Bandwidth = bandwidthInt
+				}
+				if strings.HasPrefix(param, "AVERAGE-BANDWIDTH") {
+					averageBandwidth := strings.Split(streamInfo[1], "=")[1]
+					averageBandwidthInt, parseErr := strconv.Atoi(averageBandwidth)
+					if parseErr != nil {
+						return Playlist{}, errors.New("unable to parse average bandwidth")
+					}
+					stream.AverageBandwith = averageBandwidthInt
+				}
+				if strings.HasPrefix(param, "CODECS") {
+					codecs := strings.Split(streamInfo[1], "=")[1]
+					stream.Codecs = codecs
+				}
+				if strings.HasPrefix(param, "RESOLUTION") {
+					resolution := strings.Split(streamInfo[1], "=")[1]
+					stream.Resolution = resolution
+				}
+				if strings.HasPrefix(param, "FRAME-RATE") {
+					frameRate := strings.Split(streamInfo[1], "=")[1]
+					frameRateFloat, parseErr := strconv.ParseFloat(frameRate, 64)
+					if parseErr != nil {
+						return Playlist{}, errors.New("unable to parse frame rate")
+					}
+					stream.FrameRate = frameRateFloat
+				}
+				if strings.HasPrefix(param, "HDCP-LEVEL") {
+					hdcpLevel := strings.Split(streamInfo[1], "=")[1]
+					stream.HdcpLevel = hdcpLevel
+				}
+				if strings.HasPrefix(param, "VIDEO") {
+					video := strings.Split(streamInfo[1], "=")[1]
+					stream.Video = video
+				}
+				if strings.HasPrefix(param, "AUDIO") {
+					audio := strings.Split(streamInfo[1], "=")[1]
+					stream.Audio = audio
+				}
+				if strings.HasPrefix(param, "SUBTITLES") {
+					subtitle := strings.Split(streamInfo[1], "=")[1]
+					stream.Subtitle = subtitle
+				}
+				if strings.HasPrefix(param, "CLOSED-CAPTIONS") {
+					closedCaptions := strings.Split(streamInfo[1], "=")[1]
+					stream.ClosedCaptions = closedCaptions
+				}
+				if strings.HasPrefix(param, "NAME") {
+					name := strings.Split(streamInfo[1], "=")[1]
+					stream.Name = name
+				}
 			}
-			resolution := strings.Split(streamInfo[2], "=")[1]
-			codecs := strings.Split(streamInfo[3], "=")[1]
-			frameRate := strings.Split(streamInfo[4], "=")[1]
-			frameRateFloat, parseErr := strconv.ParseFloat(frameRate, 64)
-			if parseErr != nil {
-				return Playlist{}, errors.New("unable to parse frame rate")
-			}
-			stream := &StreamInfo{resolution, bandwidthInt, codecs, "", frameRateFloat, ""}
-			playlist.Streams = append(playlist.Streams, *stream)
+			playlist.VariantStreams = append(playlist.VariantStreams, *stream)
 		} else if strings.HasPrefix(line, "#") || line == "" {
 			continue
-		} else if len(playlist.Tracks) == 0 && len(playlist.Streams) == 0 {
+		} else if len(playlist.Tracks) == 0 && len(playlist.VariantStreams) == 0 {
 			return Playlist{},
 				errors.New("URI provided for playlist with no tracks or streams")
 
-		} else {
+		} else if playlist.VariantStreams != nil {
+			playlist.VariantStreams[len(playlist.VariantStreams)-1].URI = strings.Trim(line, " ")
+		} else if playlist.VariantStreams == nil {
 			playlist.Tracks[len(playlist.Tracks)-1].URI = strings.Trim(line, " ")
 		}
 	}
