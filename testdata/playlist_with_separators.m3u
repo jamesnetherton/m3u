@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="example.1.us" tvg-name="Example 1" group-title="Example Network",Example 1
+https://example.com/example1
+
+---UHD | 4K Channels
+#EXTINF:-1 tvg-id="example.2.us" tvg-name="Example 2" group-title="Example Network",Example 2
+https://example.com/example2

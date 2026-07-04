@@ -189,3 +189,22 @@ func TestMarshallPlaylist(t *testing.T) {
 		}
 	}
 }
+
+func TestPlaylistWithSeparatorLines(t *testing.T) {
+	playlist, err := Parse("testdata/playlist_with_separators.m3u")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(playlist.Tracks) != 2 {
+		t.Fatalf("Expected track count to be 2 but was %d", len(playlist.Tracks))
+	}
+
+	if playlist.Tracks[0].URI != "https://example.com/example1" {
+		t.Fatalf("Expected Tracks[0].URI to be 'https://example.com/example1' but was '%s'", playlist.Tracks[0].URI)
+	}
+
+	if playlist.Tracks[1].URI != "https://example.com/example2" {
+		t.Fatalf("Expected Tracks[1].URI to be 'https://example.com/example2' but was '%s'", playlist.Tracks[1].URI)
+	}
+}
