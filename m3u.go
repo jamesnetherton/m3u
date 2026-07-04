@@ -175,9 +175,9 @@ func Parse(fileName string) (Playlist, error) {
 			return Playlist{},
 				errors.New("URI provided for playlist with no tracks or streams")
 
-		} else if playlist.VariantStreams != nil {
+		} else if playlist.VariantStreams != nil && playlist.VariantStreams[len(playlist.VariantStreams)-1].URI == "" {
 			playlist.VariantStreams[len(playlist.VariantStreams)-1].URI = strings.Trim(line, " ")
-		} else if playlist.VariantStreams == nil {
+		} else if playlist.VariantStreams == nil && playlist.Tracks[len(playlist.Tracks)-1].URI == "" {
 			playlist.Tracks[len(playlist.Tracks)-1].URI = strings.Trim(line, " ")
 		}
 	}
